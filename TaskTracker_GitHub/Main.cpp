@@ -57,7 +57,7 @@ int main()
 					std::string message = commit["message"];
 					std::string url = commit["url"];
 					std::string sha = url.substr(url.find_last_of('/') + 1); // Extract SHA from URL
-					std::string gitHubUrl = "https:://github.com/" + repo + "/commit/" + sha;
+					std::string gitHubUrl = "https://github.com/" + repo + "/commit/" + sha;
 					std::cout << "- Commit message: " << message << "\n";
 					std::cout << "- Commit URL: " << gitHubUrl << "\n";
 				}
