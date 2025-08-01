@@ -75,7 +75,6 @@ int CurlSetup::CurlCheckJsonSet()
 		return 0; // Return 0 to indicate failure
 	}
 	else {
-		std::cout << "Successfully fetched repositories" << std::endl;
 		SetupJson(); // Call SetupJson to parse the response string into jsonData
 		return 1;
 	}

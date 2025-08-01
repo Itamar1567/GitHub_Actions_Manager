@@ -1,8 +1,10 @@
 #include "CurlSetup.h"
+#include "Validate.h"
 
 int main()
 {
 	CurlSetup* curlSetup = new CurlSetup();
+	Validate* validate = new Validate();
 
 	//Token for GitHub API authentication
 	std::string token;
@@ -12,7 +14,6 @@ int main()
 	//request user input for GitHub username
 	std::string github_username;
 	std::string requestedRepoName;
-	std::string responseString;
 	while (true)
 	{
 		system("cls"); // Clear the console screen
@@ -25,11 +26,8 @@ int main()
 		std::cout << "Please select an option (1-4): ";
 		std::cin >> inputNumber;
 
-		while (inputNumber > 3 && inputNumber < 1)
-		{
-			std::cout << "Invalid option. Please select a valid option (1-3): ";
-			std::cin >> inputNumber;
-		}
+		validate->ValidateInput(inputNumber, 1, 4); // Validate the input to ensure it's between 1 and 4
+
 		if (inputNumber == 1)
 		{
 			std::cin.ignore(); // Clear the newline character from the input buffer
@@ -103,6 +101,7 @@ int main()
 		}
 		else if (inputNumber == 2)
 		{
+
 			bool isFoundRepo = false;
 			struct curl_slist* headers = nullptr;
 			std::cin.ignore();
@@ -113,6 +112,7 @@ int main()
 			std::cout << "**************************************" << std::endl;
 			while (isFoundRepo == false)
 			{
+				curlSetup->CleanUp();
 				headers = nullptr; // Reset headers for each iteration
 
 				std::cout << "Please input your GitHub Access token: ";
@@ -130,15 +130,8 @@ int main()
 					curlSetup->Setup(url);
 					curlSetup->CurlCheckJsonSet();
 
-					if (curlSetup->GetJsonData()["message"] == "Not Found" || curlSetup->GetJsonData()["status"] == "401")
-					{
-						std::cout << "\nRepository not found" << std::endl;
-						curlSetup->CleanUp();
-					}
-					else
-					{
-						isFoundRepo = true; // Set the flag to true if the repository is found
-					}
+					isFoundRepo = validate->ValidateJson(curlSetup->GetJsonData()); // Set the flag to true if the repository is found
+					
 				}
 
 			}
@@ -154,12 +147,9 @@ int main()
 			std::cout << "1.Change the status of this repository: " << std::endl;
 			std::cout << "2. Exit" << std::endl;
 			std::cin >> inputNumber;
-			while (inputNumber > 2 || inputNumber < 1)
-			{
-				std::cout << "Invalid option. Please select a valid option (1-3): " << std::endl;
-				std::cin.ignore();
-				std::cin >> inputNumber;
-			}
+
+			validate->ValidateInput(inputNumber, 1, 2); // Validate the input to ensure it's between 1 and 4
+
 			if (inputNumber == 1)
 			{
 				std::cout << "1. Make it private" << std::endl;
@@ -168,12 +158,7 @@ int main()
 				std::cout << "Please select an option (1-3): " << std::endl;
 
 				std::cin >> inputNumber;
-				while (inputNumber > 3 || inputNumber < 1)
-				{
-					std::cout << "Invalid option. Please select a valid option (1-3): ";
-					std::cin.ignore();
-					std::cin >> inputNumber;
-				}
+				validate->ValidateInput(inputNumber, 1, 3); // Validate the input to ensure it's between 1 and 3
 
 				std::string payload;
 				if (inputNumber == 3)
@@ -195,9 +180,6 @@ int main()
 					std::cout << "Successfully changed the status of the repository: " << requestedRepoName << std::endl;
 
 				}
-				
-				
-
 				
 				curlSetup->CleanUp(); // Clean up the CURL resources after use
 				std::cout << "Press Enter to continue..." << std::endl;
@@ -228,20 +210,17 @@ int main()
 				while (isFoundRepo == false)
 				{
 
+					curlSetup->CleanUp(); // Clean up the CURL resources before each new request
 					system("cls");
 
 					std::cout << "Would you like to access private repositories? (Requieres a token): " << std::endl;
 					std::cout << "1: Access Private and Public Repositories" << std::endl;;
-					std::cout << "2: Access Only public Repositories" << std::endl;;
+					std::cout << "2: Access Only Public Repositories" << std::endl;;
 					std::cout << "3: Exit" << std::endl;
 
 					std::cin >> inputNumber;
 
-					while (inputNumber > 4 && inputNumber < 1)
-					{
-						std::cout << "Invalid option. Please select a valid option (1-4): ";
-						std::cin >> inputNumber;
-					}
+					validate->ValidateInput(inputNumber, 1, 3); // Validate the input to ensure it's between 1 and 4
 
 					std::cin.ignore(); // Clear the newline character from the input buffer
 
@@ -267,22 +246,11 @@ int main()
 						continue; // Exit the loop if the user chooses to exit
 					}
 
-
 					curlSetup->Setup(url);
 					curlSetup->CurlCheckJsonSet();
 
-					if (curlSetup->GetJsonData().contains("message") && curlSetup->GetJsonData()["message"] == "null" || curlSetup->GetJsonData().contains("status") && curlSetup->GetJsonData()["status"] == "401")
-					{
-						std::cout << "\nInvalid User or Access Token" << std::endl;
-						std::cout << "Press Enter to Continue." << std::endl;
-						curlSetup->CleanUp();
-						std::cin.get(); // Wait for user input before clearing the screen
-					}
-					else
-					{
-						isFoundRepo = true; // Set the flag to true if the repository is found
-					}
-
+					isFoundRepo = validate->ValidateJson(curlSetup->GetJsonData()); // Set the flag to true if the repository is found
+					
 				}
 				int i = 1;
 				for (const auto& data : curlSetup->GetJsonData())
