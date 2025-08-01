@@ -17,7 +17,7 @@ int main()
 	while (true)
 	{
 		system("cls"); // Clear the console screen
-		std::cout << "Welcome to the Mini Task Manager!" << std::endl;
+		std::cout << "Welcome to the GitHub Actions Manager!" << std::endl;
 		std::cout << "What would you like to do?" << std::endl << "Options:" << std::endl;
 		std::cout << "1. View recent GitHub activity" << std::endl;
 		std::cout << "2. Change a repositories view status" << std::endl;
@@ -189,10 +189,8 @@ int main()
 		}
 		else if (inputNumber == 3)
 		{
-
 			if (curlSetup->GetCurlHandle())
 			{
-
 				bool isFoundRepo = false;
 
 				std::string url;
@@ -259,9 +257,7 @@ int main()
 			std::cout << "Exiting the Mini Task Manager. Goodbye!" << std::endl;
 			return 0;
 		}
-
 	}
-
 }
 
 //JSON Schema for the response
