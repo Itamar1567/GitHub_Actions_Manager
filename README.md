@@ -2,7 +2,9 @@
 
 ## Purpose
 This is a self learning project for myself to get familiar with REST API's and their usage
-## Function
-This application takes in a GitHub username as an argument and returns their recent activity, such as commits, commit messages, and commit URLs 
+## Functions
+1. A user can input a GitHub username as an argument and receive the given user's recent activity, such as commits, commit messages, and commit URLs
+2. A user can view and change the status of a given repository, provided an access token is given
+3. A user can input a GitHub username as an argument and see all the given user's public repositories, or the user may provide a token and view the public and private repositories of the user whose token was given  
 
 
