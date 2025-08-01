@@ -115,7 +115,7 @@ int main()
 			{
 				headers = nullptr; // Reset headers for each iteration
 
-				std::cout << "Please input your GitHub token: ";
+				std::cout << "Please input your GitHub Access token: ";
 				std::getline(std::cin, token);
 				std::cout << "Please input your GitHub username: ";
 				std::getline(std::cin, github_username);
@@ -247,7 +247,7 @@ int main()
 
 					if (inputNumber == 1)
 					{
-						std::cout << "Enter Token: ";
+						std::cout << "Enter Access Token: ";
 						url = "https://api.github.com/user/repos";
 						std::getline(std::cin, token);
 						curlSetup->HeaderSetup(token);
@@ -273,7 +273,7 @@ int main()
 
 					if (curlSetup->GetJsonData().contains("message") && curlSetup->GetJsonData()["message"] == "null" || curlSetup->GetJsonData().contains("status") && curlSetup->GetJsonData()["status"] == "401")
 					{
-						std::cout << "\nInvalid User or Token" << std::endl;
+						std::cout << "\nInvalid User or Access Token" << std::endl;
 						std::cout << "Press Enter to Continue." << std::endl;
 						curlSetup->CleanUp();
 						std::cin.get(); // Wait for user input before clearing the screen
