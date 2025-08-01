@@ -1,7 +1,8 @@
 # TaskTracker_GitHub
 
 ## Purpose
-This is a self learning project for myself to get familiar with REST API's and their usage
+-This is a self learning project for myself to get familiar with REST API's and their usage
+-This Project allows a user to modify their GitHub repositories' status, view recent user activity, and see user repositories (Requires a GitHub Account)
 ## Functions
 1. A user can input a GitHub username as an argument and receive the given user's recent activity, such as commits, commit messages, and commit URLs
 2. A user can view and change the status of a given repository, provided an access token is given
