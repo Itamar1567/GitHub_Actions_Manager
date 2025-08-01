@@ -15,14 +15,14 @@ int main()
 	std::string responseString;
 	while (true)
 	{
-
+		system("cls"); // Clear the console screen
 		std::cout << "Welcome to the Mini Task Manager!" << std::endl;
 		std::cout << "What would you like to do?" << std::endl << "Options:" << std::endl;
 		std::cout << "1. View recent GitHub activity" << std::endl;
 		std::cout << "2. Change a repositories view status" << std::endl;
 		std::cout << "3. Browse a users repositories" << std::endl;
 		std::cout << "4. Exit" << std::endl;
-		std::cout << "Please select an option (1-3): ";
+		std::cout << "Please select an option (1-4): ";
 		std::cin >> inputNumber;
 
 		while (inputNumber > 3 && inputNumber < 1)
@@ -221,27 +221,81 @@ int main()
 
 			if (curlSetup->GetCurlHandle())
 			{
-				std::cout << "Enter GitHub username: ";
-				std::cin.ignore(); // Clear the newline character from the input buffer
-				std::getline(std::cin, github_username);
 
-				std::cout << "Would you like to access private repositories? (Requieres a token): ";
-				std::cout << "1: Access Private and Public Repositories";
-				std::cout << "2: Access Only public Repositories";
-				std::cout << "3: Exit";
+				bool isFoundRepo = false;
 
-				std::cin >> inputNumber;
+				std::string url;
+				while (isFoundRepo == false)
+				{
 
-				//if(inputNumber == 0)
-				std::string url = "https://api.github.com/users/" + github_username + "/repos";
-				curlSetup->Setup(url);
-				curlSetup->CurlCheckJsonSet();
-				std::cout << "Repositories for user: " << github_username << std::endl << std::endl;
+					system("cls");
+
+					std::cout << "Would you like to access private repositories? (Requieres a token): " << std::endl;
+					std::cout << "1: Access Private and Public Repositories" << std::endl;;
+					std::cout << "2: Access Only public Repositories" << std::endl;;
+					std::cout << "3: Exit" << std::endl;
+
+					std::cin >> inputNumber;
+
+					while (inputNumber > 4 && inputNumber < 1)
+					{
+						std::cout << "Invalid option. Please select a valid option (1-4): ";
+						std::cin >> inputNumber;
+					}
+
+					std::cin.ignore(); // Clear the newline character from the input buffer
+
+					if (inputNumber == 1)
+					{
+						std::cout << "Enter Token: ";
+						url = "https://api.github.com/user/repos";
+						std::getline(std::cin, token);
+						curlSetup->HeaderSetup(token);
+					}
+					if (inputNumber == 2)
+					{
+						std::cout << "Enter GitHub username: ";
+						std::getline(std::cin, github_username);
+						url = "https://api.github.com/users/" + github_username + "/repos";
+					}
+					if (inputNumber == 3)
+					{
+						curlSetup->CleanUp(); // Clean up the CURL resources before exiting
+						std::cout << "Exiting to main menu..." << std::endl;
+						std::cout << "Press Enter to continue..." << std::endl;
+						std::cin.get(); // Wait for user input before clearing the screen
+						continue; // Exit the loop if the user chooses to exit
+					}
+
+
+					curlSetup->Setup(url);
+					curlSetup->CurlCheckJsonSet();
+
+					if (curlSetup->GetJsonData().contains("message") && curlSetup->GetJsonData()["message"] == "null" || curlSetup->GetJsonData().contains("status") && curlSetup->GetJsonData()["status"] == "401")
+					{
+						std::cout << "\nInvalid User or Token" << std::endl;
+						std::cout << "Press Enter to Continue." << std::endl;
+						curlSetup->CleanUp();
+						std::cin.get(); // Wait for user input before clearing the screen
+					}
+					else
+					{
+						isFoundRepo = true; // Set the flag to true if the repository is found
+					}
+
+				}
+				int i = 1;
 				for (const auto& data : curlSetup->GetJsonData())
 				{
 					std::string repoName = data["name"];
-					std::cout << repoName << std::endl;
+					std::cout << std::to_string(i) + ": " + repoName << std::endl;
+					i++;
 				}
+
+				curlSetup->CleanUp(); // Clean up the CURL resources before exiting
+				std::cout << "Press Enter to continue..." << std::endl;
+				std::cin.get(); // Wait for user input before clearing the screen
+				continue; // Exit the loop if the user chooses to exit
 			}
 		}
 		else if (inputNumber == 4)
