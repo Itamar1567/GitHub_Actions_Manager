@@ -4,7 +4,7 @@
 int main()
 {
 	CurlSetup* curlSetup = new CurlSetup();
-	Validate* validate = new Validate();
+	Validate validate;
 
 	//Token for GitHub API authentication
 	std::string token;
@@ -26,7 +26,7 @@ int main()
 		std::cout << "Please select an option (1-4): ";
 		std::cin >> inputNumber;
 
-		validate->ValidateInput(inputNumber, 1, 4); // Validate the input to ensure it's between 1 and 4
+		validate.ValidateInput(inputNumber, 1, 4); // Validate the input to ensure it's between 1 and 4
 
 		if (inputNumber == 1)
 		{
@@ -101,7 +101,6 @@ int main()
 		}
 		else if (inputNumber == 2)
 		{
-
 			bool isFoundRepo = false;
 			struct curl_slist* headers = nullptr;
 			std::cin.ignore();
@@ -124,23 +123,22 @@ int main()
 
 				if (curlSetup->GetCurlHandle())
 				{
-
 					std::string url = "https://api.github.com/repos/" + github_username + "/" + requestedRepoName;
 					curlSetup->HeaderSetup(token);
 					curlSetup->Setup(url);
 					curlSetup->CurlCheckJsonSet();
 
-					isFoundRepo = validate->ValidateJson(curlSetup->GetJsonData()); // Set the flag to true if the repository is found
-					
+					isFoundRepo = validate.ValidateJson(curlSetup->GetJsonData()); // Set the flag to true if the repository is found
 				}
 
 			}
 
 			std::cout << "Successfully fetched repository status for user: " << github_username << std::endl;
-			// Print the repository status
-			std::cout << "Repository: " << curlSetup->GetJsonData()["name"] << "\n";
 
-			bool isPrivate = curlSetup->GetJsonData()["private"];
+			std::cout << "Repository: " << curlSetup->GetJsonData()["name"] << "\n"; 
+
+			bool isPrivate = curlSetup->GetJsonData()["private"]; // Print the repository status
+
 			if (isPrivate) { std::cout << "Status: " << "Private" << std::endl; }
 			else { std::cout << "Status: " << "Public" << std::endl; }
 
@@ -148,7 +146,7 @@ int main()
 			std::cout << "2. Exit" << std::endl;
 			std::cin >> inputNumber;
 
-			validate->ValidateInput(inputNumber, 1, 2); // Validate the input to ensure it's between 1 and 4
+			validate.ValidateInput(inputNumber, 1, 2); // Validate the input to ensure it's between 1 and 4
 
 			if (inputNumber == 1)
 			{
@@ -158,27 +156,18 @@ int main()
 				std::cout << "Please select an option (1-3): " << std::endl;
 
 				std::cin >> inputNumber;
-				validate->ValidateInput(inputNumber, 1, 3); // Validate the input to ensure it's between 1 and 3
+				validate.ValidateInput(inputNumber, 1, 3); // Validate the input to ensure it's between 1 and 3
 
 				std::string payload;
-				if (inputNumber == 3)
-				{
-					std::cout << "Please Wait..." << std::endl;
-				}
+				if (inputNumber == 3){ std::cout << "Please Wait..." << std::endl; }
 				else
 				{
-					if (inputNumber == 1)
-					{
-						payload = "{\"private\": true}";
-					}
-					else if (inputNumber == 2)
-					{
-						payload = "{\"private\": false}";
-					}
+					// Prepare the payload for the PATCH request based on user input
+					if (inputNumber == 1){ payload = "{\"private\": true}"; }
+					else if (inputNumber == 2){ payload = "{\"private\": false}"; }
 
 					curlSetup->PerformPatchRequest(payload); // Perform the PATCH request to change the repository status
 					std::cout << "Successfully changed the status of the repository: " << requestedRepoName << std::endl;
-
 				}
 				
 				curlSetup->CleanUp(); // Clean up the CURL resources after use
@@ -220,7 +209,7 @@ int main()
 
 					std::cin >> inputNumber;
 
-					validate->ValidateInput(inputNumber, 1, 3); // Validate the input to ensure it's between 1 and 4
+					validate.ValidateInput(inputNumber, 1, 3); // Validate the input to ensure it's between 1 and 4
 
 					std::cin.ignore(); // Clear the newline character from the input buffer
 
@@ -249,7 +238,7 @@ int main()
 					curlSetup->Setup(url);
 					curlSetup->CurlCheckJsonSet();
 
-					isFoundRepo = validate->ValidateJson(curlSetup->GetJsonData()); // Set the flag to true if the repository is found
+					isFoundRepo = validate.ValidateJson(curlSetup->GetJsonData()); // Set the flag to true if the repository is found
 					
 				}
 				int i = 1;
@@ -266,8 +255,7 @@ int main()
 				continue; // Exit the loop if the user chooses to exit
 			}
 		}
-		else if (inputNumber == 4)
-		{
+		else if (inputNumber == 4){
 			std::cout << "Exiting the Mini Task Manager. Goodbye!" << std::endl;
 			return 0;
 		}

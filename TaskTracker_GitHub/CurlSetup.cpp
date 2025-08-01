@@ -53,10 +53,10 @@ void CurlSetup::CleanUp()
 
 void CurlSetup::HeaderSetup(std::string& token)
 {
-	headers = curl_slist_append(headers, ("Authorization: token " + token).c_str());
-	headers = curl_slist_append(headers, "Accept: application/vnd.github+json");
-	headers = curl_slist_append(headers, "Content-Type: application/json");
-	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+	headers = curl_slist_append(headers, ("Authorization: token " + token).c_str()); // Add the Authorization header with the token
+	headers = curl_slist_append(headers, "Accept: application/vnd.github+json"); // Add the Accept header to specify the response format
+	headers = curl_slist_append(headers, "Content-Type: application/json"); // Add the Content-Type header to specify the request format
+	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers); // Set the headers for the CURL request
 }
 
 void CurlSetup::PerformPatchRequest(std::string& payload)
