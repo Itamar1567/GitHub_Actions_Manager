@@ -18,5 +18,11 @@
     <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CurlSetup.h">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CurlSetup.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

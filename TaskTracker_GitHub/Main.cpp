@@ -1,33 +1,11 @@
-#include <curl/curl.h>
-#include <nlohmann/json.hpp>
-#include <chrono>
-#include <iostream>
-#include <string>
-#include <thread>
-#include <cstdlib>
-
-//Point to the content, size of data chunck recieved, amount of data received, point to string to store the response
-size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* s) {
-	//total bytes of data received
-	size_t totalSize = size * nmemb;
-	//Adds resault to the string
-	s->append((char*)contents, totalSize);
-	// returns the total size of the data received so libcul doesent think something went wrong
-	return totalSize;
-}
+#include "CurlSetup.h"
 
 int main()
 {
-	//create a JSON object to store the response
-	nlohmann::json jsonData;
+	CurlSetup* curlSetup = new CurlSetup();
 
 	//Token for GitHub API authentication
 	std::string token;
-
-	//Creates a CURL object to perform the request
-	CURL* curl;
-	// Initialize CURL
-	curl = curl_easy_init();
 
 	int inputNumber;
 
@@ -42,7 +20,8 @@ int main()
 		std::cout << "What would you like to do?" << std::endl << "Options:" << std::endl;
 		std::cout << "1. View recent GitHub activity" << std::endl;
 		std::cout << "2. Change a repositories view status" << std::endl;
-		std::cout << "3. Exit" << std::endl;
+		std::cout << "3. Browse a users repositories" << std::endl;
+		std::cout << "4. Exit" << std::endl;
 		std::cout << "Please select an option (1-3): ";
 		std::cin >> inputNumber;
 
@@ -53,52 +32,27 @@ int main()
 		}
 		if (inputNumber == 1)
 		{
+			std::cin.ignore(); // Clear the newline character from the input buffer
 			system("cls");
-			std::cin.ignore(); // Clear the newline character left in the input buffer
-
 			std::cout << "**********************************" << std::endl;
 			std::cout << "*******User Recent Activity*******" << std::endl;
 			std::cout << "**********************************" << std::endl;
 			std::cout << "Please input your GitHub username: ";
 			std::getline(std::cin, github_username);
 
-			if (curl) {
+			if (curlSetup->GetCurlHandle()) {
 				// Set the URL for the request and add username to the input
 				std::string url = "https://api.github.com/users/" + github_username + "/events";
-				// Give the URL to CURL
-				curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-
-				curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET"); 
-				// Set the ser-Agent header to avoid 403 Forbidden error
-				curl_easy_setopt(curl, CURLOPT_USERAGENT, "TaskTracker/1.0");
-				// Set the write function to handle the response
-				curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-				// Set the write data to store the response in a string
-				curl_easy_setopt(curl, CURLOPT_WRITEDATA, &responseString);
-
-
-				CURLcode res = curl_easy_perform(curl);
-				if (res != CURLE_OK) {
-					std::cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << std::endl;
-				}
-				else {
-					std::cout << "Successfully fetched repositories for user: " << github_username << std::endl;
-					// Parse the response string into a JSON object
-					jsonData = nlohmann::json::parse(responseString);
-				}
-
+				curlSetup->Setup(url);
+				curlSetup->CurlCheckJsonSet();
 			}
 			else {
 				std::cerr << "Failed to initialize CURL." << std::endl;
 			}
-
-			// Clean up CURL resources since we are done with the request
-			curl_easy_cleanup(curl);
-
 			try
 			{
 				// Iterate through the JSON data and print the relevant information
-				for (const auto& data : jsonData)
+				for (const auto& data : curlSetup->GetJsonData())
 				{
 					//Get the type of event in order to get the array of commits, messages, etc.
 					std::string type = data["type"];
@@ -132,6 +86,8 @@ int main()
 					else {
 						std::cout << "- " << type << " in " << repo << "\n";
 					}
+					
+					std::cout << std::endl; // Print a newline for better readability
 					//Wait for a second before printing the next event to avoid overwhelming the output
 					std::this_thread::sleep_for(std::chrono::milliseconds(1000)); // Sleep for 1 second to avoid overwhelming the output
 				}
@@ -140,8 +96,10 @@ int main()
 				std::cerr << "Failed to parse JSON: " << e.what() << "\n";
 			}
 
+			curlSetup->CleanUp(); // Clean up the CURL resources after use
+			std::cout << "Press Enter to continue..." << std::endl;
+			std::cin.get(); // Wait for user input before clearing the screen
 			system("cls");
-
 		}
 		else if (inputNumber == 2)
 		{
@@ -159,46 +117,23 @@ int main()
 
 				std::cout << "Please input your GitHub token: ";
 				std::getline(std::cin, token);
-
-				headers = curl_slist_append(headers, ("Authorization: token " + token).c_str());
-				headers = curl_slist_append(headers, "Accept: application/vnd.github+json");
-				headers = curl_slist_append(headers, "Content-Type: application/json");
-				curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-
 				std::cout << "Please input your GitHub username: ";
 				std::getline(std::cin, github_username);
 				std::cout << "Please input the name of the repository you want to change the status of: ";
 				std::getline(std::cin, requestedRepoName);
 
-				if (curl)
+				if (curlSetup->GetCurlHandle())
 				{
 
-					curl_easy_setopt(curl, CURLOPT_URL, ("https://api.github.com/repos/" + github_username + "/" + requestedRepoName).c_str());
-					curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET"); // or omit this for GET
-					curl_easy_setopt(curl, CURLOPT_USERAGENT, "TaskTracker_GitHub/1.0");
-					curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-					curl_easy_setopt(curl, CURLOPT_WRITEDATA, &responseString);
+					std::string url = "https://api.github.com/repos/" + github_username + "/" + requestedRepoName;
+					curlSetup->HeaderSetup(token);
+					curlSetup->Setup(url);
+					curlSetup->CurlCheckJsonSet();
 
-					// 3) Perform the GET request
-					CURLcode res = curl_easy_perform(curl);
-					if (res != CURLE_OK) {
-						std::cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << std::endl;
-						return 0;
-					}
-					try {
-						jsonData = nlohmann::json::parse(responseString);
-					}
-					catch (const nlohmann::json::parse_error& e) {
-						std::cerr << "JSON parse error: " << e.what() << std::endl;
-						return 0;
-					}
-					if (jsonData["message"] == "Not Found" || jsonData["status"] == "401")
+					if (curlSetup->GetJsonData()["message"] == "Not Found" || curlSetup->GetJsonData()["status"] == "401")
 					{
 						std::cout << "\nRepository not found" << std::endl;
-						curl_slist_free_all(headers);
-						curl_easy_cleanup(curl);
-						curl = curl_easy_init();
-						responseString.clear(); // Clear the response string for the next iteration
+						curlSetup->CleanUp();
 					}
 					else
 					{
@@ -210,9 +145,9 @@ int main()
 
 			std::cout << "Successfully fetched repository status for user: " << github_username << std::endl;
 			// Print the repository status
-			std::cout << "Repository: " << jsonData["name"] << "\n";
+			std::cout << "Repository: " << curlSetup->GetJsonData()["name"] << "\n";
 
-			bool isPrivate = jsonData["private"];
+			bool isPrivate = curlSetup->GetJsonData()["private"];
 			if (isPrivate) { std::cout << "Status: " << "Private" << std::endl; }
 			else { std::cout << "Status: " << "Public" << std::endl; }
 
@@ -227,11 +162,6 @@ int main()
 			}
 			if (inputNumber == 1)
 			{
-
-
-				curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PATCH"); // Set the request method to PATCH
-
-
 				std::cout << "1. Make it private" << std::endl;
 				std::cout << "2. Make it public" << std::endl;
 				std::cout << "3. Exit" << std::endl;
@@ -246,51 +176,75 @@ int main()
 				}
 
 				std::string payload;
-				if (inputNumber == 1)
+				if (inputNumber == 3)
 				{
-					payload = "{\"private\": true}";
-				}
-				else if (inputNumber == 2)
-				{
-
-					payload = "{\"private\": false}";
-				}
-				else if (inputNumber == 3)
-				{
-					return 0;
-				}
-
-				curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload.c_str());
-				CURLcode res = curl_easy_perform(curl);
-				if (res != CURLE_OK)
-				{
-					std::cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << std::endl;
+					std::cout << "Please Wait..." << std::endl;
 				}
 				else
 				{
-					std::cout << "Successfully changed the status of the repository: " << requestedRepoName << std::endl;
-					curl_slist_free_all(headers);
-					curl_easy_cleanup(curl);
-					curl = curl_easy_init();
-					responseString.clear();
-				}
+					if (inputNumber == 1)
+					{
+						payload = "{\"private\": true}";
+					}
+					else if (inputNumber == 2)
+					{
+						payload = "{\"private\": false}";
+					}
 
+					curlSetup->PerformPatchRequest(payload); // Perform the PATCH request to change the repository status
+					std::cout << "Successfully changed the status of the repository: " << requestedRepoName << std::endl;
+
+				}
+				
+				
+
+				
+				curlSetup->CleanUp(); // Clean up the CURL resources after use
+				std::cout << "Press Enter to continue..." << std::endl;
+				std::cin.ignore(); // Wait for user input before clearing the screen
+				std::cin.get();
 				system("cls");
 
 			}
 			else if (inputNumber == 2)
 			{
-				return 0;
+				std::cout << "Please Wait..." << std::endl;
+				curlSetup->CleanUp(); // Clean up the CURL resources after use
+				std::cout << "Press Enter to continue..." << std::endl;
+				std::cin.ignore(); // Wait for user input before clearing the screen
+				std::cin.get();
+				system("cls");
 			}
-
-
-
-
-
-
-
 		}
 		else if (inputNumber == 3)
+		{
+
+			if (curlSetup->GetCurlHandle())
+			{
+				std::cout << "Enter GitHub username: ";
+				std::cin.ignore(); // Clear the newline character from the input buffer
+				std::getline(std::cin, github_username);
+
+				std::cout << "Would you like to access private repositories? (Requieres a token): ";
+				std::cout << "1: Access Private and Public Repositories";
+				std::cout << "2: Access Only public Repositories";
+				std::cout << "3: Exit";
+
+				std::cin >> inputNumber;
+
+				//if(inputNumber == 0)
+				std::string url = "https://api.github.com/users/" + github_username + "/repos";
+				curlSetup->Setup(url);
+				curlSetup->CurlCheckJsonSet();
+				std::cout << "Repositories for user: " << github_username << std::endl << std::endl;
+				for (const auto& data : curlSetup->GetJsonData())
+				{
+					std::string repoName = data["name"];
+					std::cout << repoName << std::endl;
+				}
+			}
+		}
+		else if (inputNumber == 4)
 		{
 			std::cout << "Exiting the Mini Task Manager. Goodbye!" << std::endl;
 			return 0;
