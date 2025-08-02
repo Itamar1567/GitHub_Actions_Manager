@@ -1,3 +1,4 @@
+#define CURL_STATICLIB
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
 #include <chrono>
@@ -30,4 +31,3 @@ public:
 	CURL* GetCurlHandle();
 
 };
-

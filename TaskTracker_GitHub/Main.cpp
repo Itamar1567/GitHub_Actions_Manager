@@ -4,13 +4,12 @@
 int main()
 {
 	CurlSetup* curlSetup = new CurlSetup();
-	Validate validate;
-
+	int a;
 	//Token for GitHub API authentication
 	std::string token;
 
-	int inputNumber;
-
+	std::string userInput; 
+	int numericalInput; 
 	//request user input for GitHub username
 	std::string github_username;
 	std::string requestedRepoName;
@@ -23,20 +22,18 @@ int main()
 		std::cout << "2. Change a repositories view status" << std::endl;
 		std::cout << "3. Browse a users repositories" << std::endl;
 		std::cout << "4. Exit" << std::endl;
-		std::cout << "Please select an option (1-4): ";
-		std::cin >> inputNumber;
 
-		validate.ValidateInput(inputNumber, 1, 4); // Validate the input to ensure it's between 1 and 4
+		Validate::AskForInput("Response: ", userInput); // Ask for user input
+		if (Validate::ValidateInRange(userInput, 1, 4)) { numericalInput = Validate::TryParseInteger(userInput); }
+		else { return 0; }
 
-		if (inputNumber == 1)
+		if (numericalInput == 1)
 		{
-			std::cin.ignore(); // Clear the newline character from the input buffer
 			system("cls");
 			std::cout << "**********************************" << std::endl;
 			std::cout << "*******User Recent Activity*******" << std::endl;
 			std::cout << "**********************************" << std::endl;
-			std::cout << "Please input your GitHub username: ";
-			std::getline(std::cin, github_username);
+			Validate::AskForInput("Please input your GitHub username: ", github_username); // Ask for user input
 
 			if (curlSetup->GetCurlHandle()) {
 				// Set the URL for the request and add username to the input
@@ -99,11 +96,10 @@ int main()
 			std::cin.get(); // Wait for user input before clearing the screen
 			system("cls");
 		}
-		else if (inputNumber == 2)
+		else if (numericalInput == 2)
 		{
 			bool isFoundRepo = false;
 			struct curl_slist* headers = nullptr;
-			std::cin.ignore();
 			system("cls");
 
 			std::cout << "**************************************" << std::endl;
@@ -114,12 +110,9 @@ int main()
 				curlSetup->CleanUp();
 				headers = nullptr; // Reset headers for each iteration
 
-				std::cout << "Please input your GitHub Access token: ";
-				std::getline(std::cin, token);
-				std::cout << "Please input your GitHub username: ";
-				std::getline(std::cin, github_username);
-				std::cout << "Please input the name of the repository you want to change the status of: ";
-				std::getline(std::cin, requestedRepoName);
+				Validate::AskForInput("Please input your GitHub Access token: ", token); // Ask for user input
+				Validate::AskForInput("Please input your GitHub username: ", github_username); // Ask for user input
+				Validate::AskForInput("Please input the name of the repository you want to change the status of: ", requestedRepoName); // Ask for user input
 
 				if (curlSetup->GetCurlHandle())
 				{
@@ -128,9 +121,25 @@ int main()
 					curlSetup->Setup(url);
 					curlSetup->CurlCheckJsonSet();
 
-					isFoundRepo = validate.ValidateJson(curlSetup->GetJsonData()); // Set the flag to true if the repository is found
+					isFoundRepo = Validate::ValidateJson(curlSetup->GetJsonData()); // Set the flag to true if the repository is found
 				}
+				if (isFoundRepo == false)
+				{
 
+					std::cout << "1.Continue" << std::endl;
+					std::cout << "2.Exit" << std::endl;
+					Validate::AskForInput("Response: ", userInput); // Ask for user input
+					if (Validate::ValidateInRange(userInput, 1, 2)) { numericalInput = Validate::TryParseInteger(userInput); }
+					if (numericalInput == 1)
+					{
+						continue; // Continue the loop to ask for the repository name again
+					}
+					else if (numericalInput == 2)
+					{
+						return 0; // Exit the program if the user chooses to exit
+					}
+
+				}
 			}
 
 			std::cout << "Successfully fetched repository status for user: " << github_username << std::endl;
@@ -144,27 +153,26 @@ int main()
 
 			std::cout << "1.Change the status of this repository: " << std::endl;
 			std::cout << "2. Exit" << std::endl;
-			std::cin >> inputNumber;
 
-			validate.ValidateInput(inputNumber, 1, 2); // Validate the input to ensure it's between 1 and 4
+			Validate::AskForInput("Response: ", userInput); // Ask for user input
+			if (Validate::ValidateInRange(userInput, 1, 4)) { numericalInput = Validate::TryParseInteger(userInput); }
 
-			if (inputNumber == 1)
+			if (numericalInput == 1)
 			{
 				std::cout << "1. Make it private" << std::endl;
 				std::cout << "2. Make it public" << std::endl;
 				std::cout << "3. Exit" << std::endl;
-				std::cout << "Please select an option (1-3): " << std::endl;
-
-				std::cin >> inputNumber;
-				validate.ValidateInput(inputNumber, 1, 3); // Validate the input to ensure it's between 1 and 3
+				Validate::AskForInput("Response: ", userInput); // Ask for user input
+				if (Validate::ValidateInRange(userInput, 1, 3)) { numericalInput = Validate::TryParseInteger(userInput); }
 
 				std::string payload;
-				if (inputNumber == 3){ std::cout << "Please Wait..." << std::endl; }
+
+				if (numericalInput == 3){ std::cout << "Please Wait..." << std::endl; }
 				else
 				{
 					// Prepare the payload for the PATCH request based on user input
-					if (inputNumber == 1){ payload = "{\"private\": true}"; }
-					else if (inputNumber == 2){ payload = "{\"private\": false}"; }
+					if (numericalInput == 1){ payload = "{\"private\": true}"; }
+					else if (numericalInput == 2){ payload = "{\"private\": false}"; }
 
 					curlSetup->PerformPatchRequest(payload); // Perform the PATCH request to change the repository status
 					std::cout << "Successfully changed the status of the repository: " << requestedRepoName << std::endl;
@@ -172,22 +180,20 @@ int main()
 				
 				curlSetup->CleanUp(); // Clean up the CURL resources after use
 				std::cout << "Press Enter to continue..." << std::endl;
-				std::cin.ignore(); // Wait for user input before clearing the screen
 				std::cin.get();
 				system("cls");
 
 			}
-			else if (inputNumber == 2)
+			else if (numericalInput == 2)
 			{
 				std::cout << "Please Wait..." << std::endl;
 				curlSetup->CleanUp(); // Clean up the CURL resources after use
 				std::cout << "Press Enter to continue..." << std::endl;
-				std::cin.ignore(); // Wait for user input before clearing the screen
 				std::cin.get();
 				system("cls");
 			}
 		}
-		else if (inputNumber == 3)
+		else if (numericalInput == 3)
 		{
 			if (curlSetup->GetCurlHandle())
 			{
@@ -205,26 +211,21 @@ int main()
 					std::cout << "2: Access Only Public Repositories" << std::endl;;
 					std::cout << "3: Exit" << std::endl;
 
-					std::cin >> inputNumber;
+					Validate::AskForInput("Response: ", userInput); // Ask for user input
+					if (Validate::ValidateInRange(userInput, 1, 3)) { numericalInput = Validate::TryParseInteger(userInput); }
 
-					validate.ValidateInput(inputNumber, 1, 3); // Validate the input to ensure it's between 1 and 4
-
-					std::cin.ignore(); // Clear the newline character from the input buffer
-
-					if (inputNumber == 1)
+					if (numericalInput == 1)
 					{
-						std::cout << "Enter Access Token: ";
 						url = "https://api.github.com/user/repos";
-						std::getline(std::cin, token);
+						Validate::AskForInput("Enter Access Token: ", token); // Ask for user input
 						curlSetup->HeaderSetup(token);
 					}
-					if (inputNumber == 2)
+					if (numericalInput == 2)
 					{
-						std::cout << "Enter GitHub username: ";
-						std::getline(std::cin, github_username);
+						Validate::AskForInput("Enter GitHub username: ", github_username); // Ask for user input
 						url = "https://api.github.com/users/" + github_username + "/repos";
 					}
-					if (inputNumber == 3)
+					if (numericalInput == 3)
 					{
 						curlSetup->CleanUp(); // Clean up the CURL resources before exiting
 						std::cout << "Exiting to main menu..." << std::endl;
@@ -236,8 +237,26 @@ int main()
 					curlSetup->Setup(url);
 					curlSetup->CurlCheckJsonSet();
 
-					isFoundRepo = validate.ValidateJson(curlSetup->GetJsonData()); // Set the flag to true if the repository is found
+					isFoundRepo = Validate::ValidateJson(curlSetup->GetJsonData()); // Set the flag to true if the repository is found
 					
+					if (isFoundRepo == false)
+					{
+
+						std::cout << "1.Continue" << std::endl;
+						std::cout << "2.Exit" << std::endl;
+						Validate::AskForInput("Response: ", userInput); // Ask for user input
+						if (Validate::ValidateInRange(userInput, 1, 2)) { numericalInput = Validate::TryParseInteger(userInput); }
+						if (numericalInput == 1)
+						{
+							continue; // Continue the loop to ask for the repository name again
+						}
+						else if (numericalInput == 2)
+						{
+							return 0; // Exit the program if the user chooses to exit
+						}
+
+					}
+
 				}
 				int i = 1;
 				for (const auto& data : curlSetup->GetJsonData())
@@ -253,7 +272,7 @@ int main()
 				continue; // Exit the loop if the user chooses to exit
 			}
 		}
-		else if (inputNumber == 4){
+		else if (numericalInput == 4){
 			std::cout << "Exiting the Mini Task Manager. Goodbye!" << std::endl;
 			return 0;
 		}
